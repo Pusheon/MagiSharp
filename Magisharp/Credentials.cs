@@ -12,9 +12,7 @@ public class Credentials
 
     public static async Task<Credentials> Load(string path = "creds.yml")
     {
-        var deserializer = new DeserializerBuilder()
-            .WithNamingConvention(UnderscoredNamingConvention.Instance)
-            .Build();
+        var deserializer = new Deserializer();
         var content = await File.ReadAllTextAsync(path);
         return deserializer.Deserialize<Credentials>(content);
     }

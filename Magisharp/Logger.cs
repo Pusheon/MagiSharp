@@ -1,4 +1,5 @@
 ﻿using Discord.Webhook;
+using Magisharp.Extensions;
 
 namespace Magisharp;
 
@@ -12,7 +13,7 @@ public class Logger : IDisposable
         set
         {
             _webhookUrl = value;
-            _client = new(value);
+            _client = new DiscordWebhookClient(value);
         }
     }
     public LogSeverity LogLevel { get; set; }

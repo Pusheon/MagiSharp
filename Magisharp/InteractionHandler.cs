@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace Magisharp.Commands;
+namespace Magisharp;
 
 internal class InteractionHandler
 {
@@ -66,6 +66,7 @@ internal class InteractionHandler
     private static async Task InteractionFailHandle(string name, IResult result, IInteractionContext context)
     {
         var interaction = context.Interaction as SocketInteraction;
+        await interaction.RespondAsync($"Command failed for the following reason:\n{result.ErrorReason}", ephemeral: true);
 
         // TODO: Notify user that a command failed.
     }
@@ -82,7 +83,7 @@ internal class InteractionHandler
         if (!_firstClientReady) return;
         _firstClientReady = false;
 
-        RestGuild guild = await _client.Rest.GetGuildAsync(_debugGuild);
+        var guild = await _client.Rest.GetGuildAsync(_debugGuild);
         
         if (!DebugMode)
         {

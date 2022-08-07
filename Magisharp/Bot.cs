@@ -1,6 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using Magisharp.Commands;
+using Magisharp.Services;
+using PokeApiNet;
 
 namespace Magisharp;
 
@@ -8,15 +10,11 @@ public class Bot
 {
     public Credentials Credentials { get; private set; }
 
-    private readonly IServiceProvider _services;
-
     private readonly InteractionHandler _interactions;
 
-    private readonly InteractionService _interactionService;
-
-    private readonly DiscordSocketClient _client = new DiscordSocketClient(new DiscordSocketConfig
+    private readonly DiscordSocketClient _client = new(new DiscordSocketConfig
     {
-        GatewayIntents = GatewayIntents.Guilds,
+        GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMessages,
 #if DEBUG
         DefaultRatelimitCallback = info =>
         {
@@ -34,20 +32,29 @@ public class Bot
 
     public Bot()
     {
-        _services = new ServiceCollection().AddSingleton(_client).BuildServiceProvider();
 
-        _interactionService = new(_client, new()
+        InteractionService interactionService = new(_client, new InteractionServiceConfig
         {
             UseCompiledLambda = true,
             ExitOnMissingModalField = false
         });
-
+        
         Credentials = Credentials.Load().GetAwaiter().GetResult();
-
-        _interactions = new InteractionHandler(_client, _interactionService, _services, Credentials);
+        
+        var pokeClient = new PokeApiClient();
+        
+        IServiceProvider services = new ServiceCollection()
+            .AddSingleton(_client)
+            .AddSingleton(interactionService)
+            .AddSingleton(Credentials)
+            .AddSingleton(pokeClient)
+            .AddSingleton(new PokemonSpawn(_client, pokeClient))
+            .BuildServiceProvider();
+        
+        _interactions = new InteractionHandler(_client, interactionService, services, Credentials);
 
         _interactions.Log += LogHandler;
-        _interactionService.Log += LogHandler;
+        interactionService.Log += LogHandler;
         _client.Log += LogHandler;
     }
 

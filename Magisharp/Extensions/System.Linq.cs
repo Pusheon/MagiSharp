@@ -1,4 +1,4 @@
-namespace Discord;
+namespace Magisharp.Extensions;
 
 public static class SystemLinqExtensions
 {
